@@ -173,7 +173,7 @@ func Test(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			alive := gameOfLife(test.args.p, nil)
-			fmt.Println("---------------------------Ran test:", test.name)
+			// fmt.Println("---------------------------Ran test:", test.name)
 			if test.name != "trace" {
 				for _, element := range test.args.expectedAlive {
 					fmt.Println(element)
