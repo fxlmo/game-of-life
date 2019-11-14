@@ -37,6 +37,7 @@ type distributorToIo struct {
 
 	filename  chan<- string
 	inputVal  <-chan uint8
+	outputVal chan<- uint8
 }
 
 // ioToDistributor defines all chans that the io goroutine will have to communicate with the distributor goroutine.
@@ -47,6 +48,7 @@ type ioToDistributor struct {
 
 	filename  <-chan string
 	inputVal  chan<- uint8
+	outputVal <-chan uint8
 }
 
 // distributorChans stores all the chans that the distributor goroutine will use.
