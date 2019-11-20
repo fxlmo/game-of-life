@@ -31,6 +31,29 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		}
 	}
 
+	//call world building function
+	world = calcPgm(p, d, alive, world)
+
+	// Create an empty slice to store coordinates of cells that are still alive after p.turns are done.
+	var finalAlive []cell
+	// Go through the world and append the cells that are still alive.
+	for y := 0; y < p.imageHeight; y++ {
+		for x := 0; x < p.imageWidth; x++ {
+			if world[y][x] != 0 {
+				finalAlive = append(finalAlive, cell{x: x, y: y})
+			}
+		}
+	}
+
+	// Make sure that the Io has finished any output before exiting.
+	d.io.command <- ioCheckIdle
+	<-d.io.idle
+
+	// Return the coordinates of cells that are still alive.
+	alive <- finalAlive
+}
+
+func calcPgm(p golParams, d distributorChans, alive chan []cell, world [][]byte) [][]byte {
 	// initiate temporary world structure
 	tempWorld := make([][]int, p.imageHeight)
 	for i := range tempWorld {
@@ -45,13 +68,11 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 				liveNeighbours := 0
 				for i := -1; i<= 1; i++ {
 					for j := -1; j <= 1; j++ {
-						if (j != 0 || i != 0) {
+						if j != 0 || i != 0 {
 							a, b := y+i, x+j
-							a = a % (p.imageHeight)
-							b = b % (p.imageWidth)
-							if (a < 0) {a += p.imageHeight}
-							if (b < 0) {b += p.imageWidth}
-							if (world[a][b] == 0xFF) {
+							a = (a + p.imageHeight) % (p.imageHeight)
+							b = (b + p.imageWidth) % (p.imageWidth)
+							if world[a][b] == 0xFF {
 								liveNeighbours += 1
 							}
 						}
@@ -62,9 +83,9 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		}
 		for a := 0; a < p.imageHeight; a++ {
 			for b := 0; b < p.imageWidth; b++ {
-				if (tempWorld[a][b] == 3) {
+				if tempWorld[a][b] == 3 {
 					world[a][b] = 0xFF
-				} else if (tempWorld[a][b] != 2) {
+				} else if tempWorld[a][b] != 2 {
 					world[a][b] = 0
 				}
 				tempWorld[a][b] = 0
@@ -72,23 +93,5 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		}
 	}
 
-
-	// Create an empty slice to store coordinates of cells that are still alive after p.turns are done.
-	var finalAlive []cell
-	// Go through the world and append the cells that are still alive.
-	for y := 0; y < p.imageHeight; y++ {
-		for x := 0; x < p.imageWidth; x++ {
-			if world[y][x] != 0 {
-				fmt.Printf("Alive cell at %d, %d\n", x, y)
-				finalAlive = append(finalAlive, cell{x: x, y: y})
-			}
-		}
-	}
-
-	// Make sure that the Io has finished any output before exiting.
-	d.io.command <- ioCheckIdle
-	<-d.io.idle
-
-	// Return the coordinates of cells that are still alive.
-	alive <- finalAlive
+	return world
 }
