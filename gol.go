@@ -45,11 +45,13 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 				liveNeighbours := 0
 				for i := -1; i<= 1; i++ {
 					for j := -1; j <= 1; j++ {
-						if j != 0 || i != 0 {
+						if (j != 0 || i != 0) {
 							a, b := y+i, x+j
-							a = (a + p.imageHeight) % (p.imageHeight)
-							b = (b + p.imageWidth) % (p.imageWidth)
-							if world[a][b] != 0 {
+							a = a % (p.imageHeight)
+							b = b % (p.imageWidth)
+							if (a < 0) {a += p.imageHeight}
+							if (b < 0) {b += p.imageWidth}
+							if (world[a][b] == 0xFF) {
 								liveNeighbours += 1
 							}
 						}
@@ -60,9 +62,9 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		}
 		for a := 0; a < p.imageHeight; a++ {
 			for b := 0; b < p.imageWidth; b++ {
-				if tempWorld[a][b] == 3 {
+				if (tempWorld[a][b] == 3) {
 					world[a][b] = 0xFF
-				} else if tempWorld[a][b] != 2 {
+				} else if (tempWorld[a][b] != 2) {
 					world[a][b] = 0
 				}
 				tempWorld[a][b] = 0
@@ -82,17 +84,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 			}
 		}
 	}
-
-	// The distributor goroutine sends the requested image byte by byte, in rows.
-	for y := 0; y < p.imageHeight; y++ {
-		for x := 0; x < p.imageWidth; x++ {
-			d.io.outputVal <- world[x][y]
-		}
-	}
-
-	// Request the io goroutine to write the image with the given filename.
-	d.io.command <- ioOutput
-	d.io.filename <- strings.Join([]string{strconv.Itoa(p.imageWidth), strconv.Itoa(p.imageHeight)}, "x")
 
 	// Make sure that the Io has finished any output before exiting.
 	d.io.command <- ioCheckIdle
