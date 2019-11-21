@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -173,12 +172,9 @@ func Test(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			alive := gameOfLife(test.args.p, nil)
-			// fmt.Println("---------------------------Ran test:", test.name)
+			//fmt.Println("Ran test:", test.name)
 			if test.name != "trace" {
-				for _, element := range test.args.expectedAlive {
-					fmt.Println(element)
-				}
-				assert.ElementsMatch(t, alive, test.args.expectedAlive)
+				assertEqualBoard(t, alive, test.args.expectedAlive, test.args.p)
 			}
 		})
 	}
@@ -193,123 +189,123 @@ func Benchmark(b *testing.B) {
 	}{
 		{
 			"16x16x2", golParams{
-			turns:       benchLength,
-			threads:     2,
-			imageWidth:  16,
-			imageHeight: 16,
-		}},
+				turns:       benchLength,
+				threads:     2,
+				imageWidth:  16,
+				imageHeight: 16,
+			}},
 
 		{
 			"16x16x4", golParams{
-			turns:       benchLength,
-			threads:     4,
-			imageWidth:  16,
-			imageHeight: 16,
-		}},
+				turns:       benchLength,
+				threads:     4,
+				imageWidth:  16,
+				imageHeight: 16,
+			}},
 
 		{
 			"16x16x8", golParams{
-			turns:       benchLength,
-			threads:     8,
-			imageWidth:  16,
-			imageHeight: 16,
-		}},
+				turns:       benchLength,
+				threads:     8,
+				imageWidth:  16,
+				imageHeight: 16,
+			}},
 
 		{
 			"64x64x2", golParams{
-			turns:       benchLength,
-			threads:     2,
-			imageWidth:  64,
-			imageHeight: 64,
-		}},
+				turns:       benchLength,
+				threads:     2,
+				imageWidth:  64,
+				imageHeight: 64,
+			}},
 
 		{
 			"64x64x4", golParams{
-			turns:       benchLength,
-			threads:     4,
-			imageWidth:  64,
-			imageHeight: 64,
-		}},
+				turns:       benchLength,
+				threads:     4,
+				imageWidth:  64,
+				imageHeight: 64,
+			}},
 
 		{
 			"64x64x8", golParams{
-			turns:       benchLength,
-			threads:     8,
-			imageWidth:  64,
-			imageHeight: 64,
-		}},
+				turns:       benchLength,
+				threads:     8,
+				imageWidth:  64,
+				imageHeight: 64,
+			}},
 
 		{
 			"128x128x2", golParams{
-			turns:       benchLength,
-			threads:     2,
-			imageWidth:  128,
-			imageHeight: 128,
-		}},
+				turns:       benchLength,
+				threads:     2,
+				imageWidth:  128,
+				imageHeight: 128,
+			}},
 
 		{
 			"128x128x4", golParams{
-			turns:       benchLength,
-			threads:     4,
-			imageWidth:  128,
-			imageHeight: 128,
-		}},
+				turns:       benchLength,
+				threads:     4,
+				imageWidth:  128,
+				imageHeight: 128,
+			}},
 
 		{
 			"128x128x8", golParams{
-			turns:       benchLength,
-			threads:     8,
-			imageWidth:  128,
-			imageHeight: 128,
-		}},
+				turns:       benchLength,
+				threads:     8,
+				imageWidth:  128,
+				imageHeight: 128,
+			}},
 
 		{
 			"256x256x2", golParams{
-			turns:       benchLength,
-			threads:     2,
-			imageWidth:  256,
-			imageHeight: 256,
-		}},
+				turns:       benchLength,
+				threads:     2,
+				imageWidth:  256,
+				imageHeight: 256,
+			}},
 
 		{
 			"256x256x4", golParams{
-			turns:       benchLength,
-			threads:     4,
-			imageWidth:  256,
-			imageHeight: 256,
-		}},
+				turns:       benchLength,
+				threads:     4,
+				imageWidth:  256,
+				imageHeight: 256,
+			}},
 
 		{
 			"256x256x8", golParams{
-			turns:       benchLength,
-			threads:     8,
-			imageWidth:  256,
-			imageHeight: 256,
-		}},
+				turns:       benchLength,
+				threads:     8,
+				imageWidth:  256,
+				imageHeight: 256,
+			}},
 
 		{
 			"512x512x2", golParams{
-			turns:       benchLength,
-			threads:     2,
-			imageWidth:  512,
-			imageHeight: 512,
-		}},
+				turns:       benchLength,
+				threads:     2,
+				imageWidth:  512,
+				imageHeight: 512,
+			}},
 
 		{
 			"512x512x4", golParams{
-			turns:       benchLength,
-			threads:     4,
-			imageWidth:  512,
-			imageHeight: 512,
-		}},
+				turns:       benchLength,
+				threads:     4,
+				imageWidth:  512,
+				imageHeight: 512,
+			}},
 
 		{
 			"512x512x8", golParams{
-			turns:       benchLength,
-			threads:     8,
-			imageWidth:  512,
-			imageHeight: 512,
-		}},
+				turns:       benchLength,
+				threads:     8,
+				imageWidth:  512,
+				imageHeight: 512,
+			}},
 	}
 	for _, bm := range benchmarks {
 		os.Stdout = nil // Disable all program output apart from benchmark results
@@ -320,4 +316,41 @@ func Benchmark(b *testing.B) {
 			}
 		})
 	}
+}
+
+func boardFail(t *testing.T, given, expected []cell, p golParams) bool {
+	errorString := fmt.Sprintf("-----------------\n\n  FAILED TEST\n  16x16\n  %d Workers\n  %d Turns\n", p.threads, p.turns)
+	errorString = errorString + aliveCellsToString(given, expected, p.imageWidth, p.imageHeight)
+	t.Error(errorString)
+	return false
+}
+
+func assertEqualBoard(t *testing.T, given, expected []cell, p golParams) bool {
+	givenLen := len(given)
+	expectedLen := len(expected)
+
+	if givenLen != expectedLen {
+		return boardFail(t, given, expected, p)
+	}
+
+	visited := make([]bool, expectedLen)
+	for i := 0; i < givenLen; i++ {
+		element := given[i]
+		found := false
+		for j := 0; j < expectedLen; j++ {
+			if visited[j] {
+				continue
+			}
+			if expected[j] == element {
+				visited[j] = true
+				found = true
+				break
+			}
+		}
+		if !found {
+			return boardFail(t, given, expected, p)
+		}
+	}
+
+	return true
 }
