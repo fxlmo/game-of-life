@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -25,51 +24,30 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		for x := 0; x < p.imageWidth; x++ {
 			val := <-d.io.inputVal
 			if val != 0 {
-				fmt.Println("Alive cell at", x, y)
 				world[y][x] = val
 			}
 		}
 	}
 
-	// initiate temporary world structure
-	tempWorld := make([][]int, p.imageHeight)
-	for i := range tempWorld {
-		tempWorld[i] = make([]int, p.imageWidth)
+	//call world building function
+	var chans []chan [][]byte
+	for c := 0; c < p.threads; c++ {
+		chans = append(chans, make(chan [][]byte))
 	}
 
-	// Calculate the new state of Game of Life after the given number of turns.
-	for turns := 0; turns < p.turns; turns++ {
-		for y := 0; y < p.imageHeight; y++ {
+	for w := 1; w <= p.threads; w++ {
+		go calcPgm(p, d, alive, world, w, chans[w-1])
+	}
+
+	//function to reconstruct world
+	for w := 0; w < p.threads; w++ {
+		worldPart :=<-chans[w]
+		for y := 0; y < p.imageHeight/p.threads; y++ {
 			for x := 0; x < p.imageWidth; x++ {
-				// collect neighbours
-				liveNeighbours := 0
-				for i := -1; i<= 1; i++ {
-					for j := -1; j <= 1; j++ {
-						if j != 0 || i != 0 {
-							a, b := y+i, x+j
-							a = (a + p.imageHeight) % (p.imageHeight)
-							b = (b + p.imageWidth) % (p.imageWidth)
-							if world[a][b] != 0 {
-								liveNeighbours += 1
-							}
-						}
-					}
-				}
-				tempWorld[y][x] = liveNeighbours
-			}
-		}
-		for a := 0; a < p.imageHeight; a++ {
-			for b := 0; b < p.imageWidth; b++ {
-				if tempWorld[a][b] == 3 {
-					world[a][b] = 0xFF
-				} else if tempWorld[a][b] != 2 {
-					world[a][b] = 0
-				}
-				tempWorld[a][b] = 0
+				world[y + w*(p.imageHeight/p.threads)][x] = worldPart[y % (p.imageHeight/p.threads)][x]
 			}
 		}
 	}
-
 
 	// Create an empty slice to store coordinates of cells that are still alive after p.turns are done.
 	var finalAlive []cell
@@ -77,22 +55,10 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 	for y := 0; y < p.imageHeight; y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			if world[y][x] != 0 {
-				fmt.Printf("Alive cell at %d, %d\n", x, y)
 				finalAlive = append(finalAlive, cell{x: x, y: y})
 			}
 		}
 	}
-
-	// The distributor goroutine sends the requested image byte by byte, in rows.
-	for y := 0; y < p.imageHeight; y++ {
-		for x := 0; x < p.imageWidth; x++ {
-			d.io.outputVal <- world[x][y]
-		}
-	}
-
-	// Request the io goroutine to write the image with the given filename.
-	d.io.command <- ioOutput
-	d.io.filename <- strings.Join([]string{strconv.Itoa(p.imageWidth), strconv.Itoa(p.imageHeight)}, "x")
 
 	// Make sure that the Io has finished any output before exiting.
 	d.io.command <- ioCheckIdle
@@ -100,4 +66,46 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 
 	// Return the coordinates of cells that are still alive.
 	alive <- finalAlive
+}
+
+func calcPgm(p golParams, d distributorChans, alive chan []cell, world [][]byte, id int, channel chan [][]byte) {
+	// initiate temporary world structure
+	tempWorld := make([][]int, p.imageHeight/p.threads)
+	for i := range tempWorld {
+		tempWorld[i] = make([]int, p.imageWidth)
+	}
+
+	// Calculate the new state of Game of Life after the given number of turns.
+	for turns := 0; turns < p.turns; turns++ {
+		for y := (id-1)*p.imageHeight/p.threads; y < id*p.imageHeight/p.threads; y++ {
+			for x := 0; x < p.imageWidth; x++ {
+				// collect neighbours
+				liveNeighbours := 0
+				for i := -1; i<= 1; i++ {
+					for j := -1; j <= 1; j++ {
+						if j != 0 || i != 0 {
+							a, b := y+i, x+j
+							a = (a + id*p.imageHeight/p.threads) % (id*p.imageHeight/p.threads)
+							b = (b + p.imageWidth) % (p.imageWidth)
+							if world[a][b] == 0xFF {
+								liveNeighbours += 1
+							}
+						}
+					}
+				}
+				tempWorld[y % (p.imageHeight/p.threads)][x] = liveNeighbours
+			}
+		}
+		for a := 0; a < id*p.imageHeight/p.threads; a++ {
+			for b := 0; b < p.imageWidth; b++ {
+				if tempWorld[a % (p.imageHeight/p.threads)][b] == 3 {
+					world[a][b] = 0xFF
+				} else if tempWorld[a% (p.imageHeight/p.threads)][b] != 2 {
+					world[a][b] = 0
+				}
+				tempWorld[a % (p.imageHeight/p.threads)][b] = 0
+			}
+		}
+	}
+	channel <-world
 }
