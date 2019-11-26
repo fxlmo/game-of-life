@@ -67,7 +67,7 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 			go calcPgm(p, d, alive, inputChans[w-1], w, outChans[w-1])
 		}
 
-		//function to reconstruct world (use channels) TODO
+		//function to reconstruct world (use channels)
 		for w := 0; w < p.threads; w++ {
 			for y := w * p.imageHeight / p.threads; y < (w+1)*p.imageHeight/p.threads; y++ {
 				for x := 0; x < p.imageWidth; x++ {
