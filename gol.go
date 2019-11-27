@@ -6,7 +6,14 @@ import (
 )
 
 // distributor divides the work between workers and interacts with other goroutines.
-func distributor(p golParams, d distributorChans, alive chan []cell) {
+func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-chan rune) {
+
+	select {
+	case key := <-keyChan:
+		println("Found this:")
+		println(key)
+	default:
+	}
 
 	// Create the 2D slice to store the world.
 	world := make([][]byte, p.imageHeight)
@@ -89,8 +96,9 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 	}
 
 	// Make sure that the Io has finished any output before exiting.
-	d.io.command <- ioCheckIdle
+	d.io.command <-ioCheckIdle
 	<-d.io.idle
+
 
 	// Return the coordinates of cells that are still alive.
 	alive <- finalAlive
