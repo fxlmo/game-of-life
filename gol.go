@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strconv"
 	"strings"
 )
@@ -8,12 +9,6 @@ import (
 // distributor divides the work between workers and interacts with other goroutines.
 func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-chan rune) {
 
-	select {
-	case key := <-keyChan:
-		println("Found this:")
-		println(key)
-	default:
-	}
 
 	// Create the 2D slice to store the world.
 	world := make([][]byte, p.imageHeight)
@@ -35,7 +30,44 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 	}
 
+
 	for turns := 0; turns < p.turns; turns++ {
+		select {
+		//key is q (113)
+		case key :=<-keyChan:
+			if (key == 'q') {
+				//visualise board and then quit
+				visualiseMatrix(world, p.imageWidth, p.imageHeight)
+				println("Quitting...")
+				StopControlServer()
+				os.Exit(0)
+			}
+			//key is s (115)
+			if (key == 's') {
+				//visualise board
+				println("Board at turn " + string(turns))
+				visualiseMatrix(world, p.imageWidth, p.imageHeight)
+			}
+			//key is p (112)
+			if (key == 'p') {
+				//pause and print current term
+				//If paused again, resume.
+				visualiseMatrix(world, p.imageWidth, p.imageHeight)
+				println("Paused")
+				pause := true
+				for (pause) {
+					select {
+					case pauseKey :=<-keyChan:
+						if (pauseKey == 'p') {
+							pause = false
+						}
+					default:
+					}
+				}
+				println("Resuming")
+			}
+		default:
+		}
 		//call world building function
 		var inputChans []chan byte
 		var outChans []chan byte
