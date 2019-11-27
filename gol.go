@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -61,7 +60,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 				if haloY >= p.imageHeight {
 					haloY = 0
 				}
-				fmt.Printf("endy = %d, haloy = %d, for worker %d\n", endy, haloY, w)
 				inputChans[w-1] <- world[haloY][x]
 			}
 			go calcPgm(p, d, alive, inputChans[w-1], w, outChans[w-1])
