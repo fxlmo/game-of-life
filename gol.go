@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // distributor divides the work between workers and interacts with other goroutines.
 func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-chan rune) {
+
 
 
 	// Create the 2D slice to store the world.
@@ -30,6 +33,10 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 	}
 
+
+	//create ticker
+	done := make(chan int, 0)
+	go tick(done, p, world)
 
 	for turns := 0; turns < p.turns; turns++ {
 		select {
@@ -114,6 +121,12 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 		//fmt.Printf("turn %d\n", turns)
 		//visualiseMatrix(world, p.imageWidth, p.imageHeight)
+
+		select {
+		case currentAlive :=<-done:
+			fmt.Printf("Currently alive: = %d\n", currentAlive)
+		default:
+		}
 	}
 
 	// Create an empty slice to store coordinates of cells that are still alive after p.turns are done.
@@ -184,6 +197,25 @@ func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan 
 	for y := 1; y < (p.imageHeight/p.threads + 1); y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			outChan <- world[y][x]
+		}
+	}
+}
+
+func tick(done chan int, p golParams, world [][]byte) {
+
+	t := time.NewTicker(2*time.Second)
+	for {
+		select{
+		case <-t.C:
+			finalAlive := 0;
+			for y := 0; y < p.imageHeight; y++ {
+				for x := 0; x < p.imageWidth; x++ {
+					if world[y][x] != 0 {
+						finalAlive++
+					}
+				}
+			}
+			done<-finalAlive
 		}
 	}
 }
