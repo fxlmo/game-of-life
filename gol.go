@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -25,7 +24,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 		for x := 0; x < p.imageWidth; x++ {
 			val := <-d.io.inputVal
 			if val != 0 {
-				fmt.Println("Alive cell at", x, y)
 				world[y][x] = val
 			}
 		}
@@ -79,7 +77,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell) {
 	for y := 0; y < p.imageHeight; y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			if world[y][x] != 0 {
-				fmt.Printf("Alive cell at %d, %d\n", x, y)
 				finalAlive = append(finalAlive, cell{x: x, y: y})
 			}
 		}
