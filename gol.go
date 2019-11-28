@@ -11,8 +11,6 @@ import (
 // distributor divides the work between workers and interacts with other goroutines.
 func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-chan rune) {
 
-
-
 	// Create the 2D slice to store the world.
 	world := make([][]byte, p.imageHeight)
 	for i := range world {
@@ -33,7 +31,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 	}
 
-
 	//create ticker
 	done := make(chan int, 0)
 	go tick(done, p, world)
@@ -41,8 +38,8 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	for turns := 0; turns < p.turns; turns++ {
 		select {
 		//key is q (113)
-		case key :=<-keyChan:
-			if (key == 'q') {
+		case key := <-keyChan:
+			if key == 'q' {
 				//visualise board and then quit
 				visualiseMatrix(world, p.imageWidth, p.imageHeight)
 				println("Quitting...")
@@ -50,28 +47,28 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 				os.Exit(0)
 			}
 			//key is s (115)
-			if (key == 's') {
+			if key == 's' {
 				//visualise board
 				println("Board at turn " + string(turns))
 				visualiseMatrix(world, p.imageWidth, p.imageHeight)
 			}
 			//key is p (112)
-			if (key == 'p') {
+			if key == 'p' {
 				//pause and print current term
 				//If paused again, resume.
 				visualiseMatrix(world, p.imageWidth, p.imageHeight)
 				println("Paused")
 				pause := true
-				for (pause) {
+				for pause {
 					select {
-					case pauseKey :=<-keyChan:
-						if (pauseKey == 'p') {
+					case pauseKey := <-keyChan:
+						if pauseKey == 'p' {
 							pause = false
 						}
 					default:
 					}
 				}
-				println("Resuming")
+				println("Continuing")
 			}
 		default:
 		}
@@ -123,7 +120,7 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		//visualiseMatrix(world, p.imageWidth, p.imageHeight)
 
 		select {
-		case currentAlive :=<-done:
+		case currentAlive := <-done:
 			fmt.Printf("Currently alive: = %d\n", currentAlive)
 		default:
 		}
@@ -141,9 +138,8 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	}
 
 	// Make sure that the Io has finished any output before exiting.
-	d.io.command <-ioCheckIdle
+	d.io.command <- ioCheckIdle
 	<-d.io.idle
-
 
 	// Return the coordinates of cells that are still alive.
 	alive <- finalAlive
@@ -203,11 +199,11 @@ func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan 
 
 func tick(done chan int, p golParams, world [][]byte) {
 
-	t := time.NewTicker(2*time.Second)
+	t := time.NewTicker(2 * time.Second)
 	for {
-		select{
+		select {
 		case <-t.C:
-			finalAlive := 0;
+			finalAlive := 0
 			for y := 0; y < p.imageHeight; y++ {
 				for x := 0; x < p.imageWidth; x++ {
 					if world[y][x] != 0 {
@@ -215,7 +211,7 @@ func tick(done chan int, p golParams, world [][]byte) {
 					}
 				}
 			}
-			done<-finalAlive
+			done <- finalAlive
 		}
 	}
 }
