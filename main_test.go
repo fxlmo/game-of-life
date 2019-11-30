@@ -143,6 +143,22 @@ func Test(t *testing.T) {
 			},
 		}},
 
+		{"16x16x6-100", args{
+			p: golParams{
+				turns:       100,
+				threads:     6,
+				imageWidth:  16,
+				imageHeight: 16,
+			},
+			expectedAlive: []cell{
+				{x: 12, y: 0},
+				{x: 13, y: 0},
+				{x: 14, y: 0},
+				{x: 13, y: 14},
+				{x: 14, y: 15},
+			},
+		}},
+
 		{"16x16x8-100", args{
 			p: golParams{
 				turns:       100,
@@ -159,6 +175,21 @@ func Test(t *testing.T) {
 			},
 		}},
 
+		{"16x16x10-100", args{
+			p: golParams{
+				turns:       100,
+				threads:     10,
+				imageWidth:  16,
+				imageHeight: 16,
+			},
+			expectedAlive: []cell{
+				{x: 12, y: 0},
+				{x: 13, y: 0},
+				{x: 14, y: 0},
+				{x: 13, y: 14},
+				{x: 14, y: 15},
+			},
+		}},
 		// Special test to be used to generate traces - not a real test
 		//{"trace", args{
 		//	p: golParams{
@@ -172,7 +203,7 @@ func Test(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			alive := gameOfLife(test.args.p, nil)
-			//fmt.Println("Ran test:", test.name)
+			fmt.Println("Ran test:", test.name)
 			if test.name != "trace" {
 				assertEqualBoard(t, alive, test.args.expectedAlive, test.args.p)
 			}

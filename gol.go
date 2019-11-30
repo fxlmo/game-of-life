@@ -78,17 +78,29 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		//call world building function
 		var inputChans []chan byte
 		var outChans []chan byte
-		for c := 0; c < p.threads; c++ {
-			inputChans = append(inputChans, make(chan byte, p.imageWidth*(p.imageHeight/p.threads+2)))
-			outChans = append(outChans, make(chan byte, p.imageWidth*(p.imageHeight/p.threads+2)))
+		averageThread := p.imageHeight/p.threads
+		for c := 0; c < p.threads - 1; c++ {
+			inputChans = append(inputChans, make(chan byte, p.imageWidth*(averageThread+2)))
+			outChans = append(outChans, make(chan byte, p.imageWidth*(averageThread+2)))
 		}
+		if p.imageHeight%p.threads != 0 {
+            inputChans = append(inputChans, make(chan byte, p.imageWidth*(p.imageHeight%p.threads+100)))
+            outChans = append(outChans, make(chan byte, p.imageWidth*(p.imageHeight%p.threads+100)))
+        } else {
+			inputChans = append(inputChans, make(chan byte, p.imageWidth*(averageThread+2)))
+			outChans = append(outChans, make(chan byte, p.imageWidth*(averageThread+2)))
+        }
+
+
 		//sends each row byte by byte (including halo lines)
 		for w := 1; w <= p.threads; w++ {
-			starty := (w - 1) * p.imageHeight / p.threads
-			endy := w * p.imageHeight / p.threads
+			starty := (w - 1) * averageThread
+			endy := w * averageThread
+			oddOne := false
+			if w == p.threads { endy = p.imageHeight; oddOne = true }
+
 			//calculate first halo line
 			for x := 0; x < p.imageWidth; x++ {
-
 				haloY := starty - 1
 				if haloY < 0 {
 					haloY = p.imageHeight - 1
@@ -108,17 +120,23 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 				}
 				inputChans[w-1] <- world[haloY][x]
 			}
-			go calcPgm(p, d, alive, inputChans[w-1], w, outChans[w-1])
+			//TODO: change false to a flag
+			go calcPgm(p, d, alive, inputChans[w-1], w, outChans[w-1], oddOne)
 		}
 
 		//function to reconstruct world (use channels)
-		for w := 0; w < p.threads; w++ {
-			for y := w * p.imageHeight / p.threads; y < (w+1)*p.imageHeight/p.threads; y++ {
+		for w := 0; w < p.threads-1; w++ {
+			for y := w * averageThread; y < (w+1)*averageThread; y++ {
 				for x := 0; x < p.imageWidth; x++ {
 					world[y][x] = <-outChans[w]
 				}
 			}
 		}
+		for y := averageThread * (p.threads-1); y < p.imageHeight; y++ {
+            for x := 0; x < p.imageWidth; x++ {
+                world[y][x] = <-outChans[p.threads-1]
+            }
+        }
 		//fmt.Printf("turn %d\n", turns)
 		//visualiseMatrix(world, p.imageWidth, p.imageHeight)
 
@@ -149,24 +167,29 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	alive <- finalAlive
 }
 
-func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan byte, id int, outChan chan byte) {
+func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan byte, id int, outChan chan byte, oddOne bool) {
 	// initiate temporary world structure and world bit
-	tempWorld := make([][]int, p.imageHeight/p.threads+2)
-	world := make([][]byte, p.imageHeight/p.threads+2)
-	for i := range tempWorld {
-		tempWorld[i] = make([]int, p.imageWidth)
-		world[i] = make([]byte, p.imageWidth)
+	worldSize := p.imageHeight/p.threads
+	if oddOne && p.imageHeight%p.threads != 0{
+	    worldSize = p.imageHeight - worldSize * (p.threads - 1)
 	}
+    tempWorld := make([][]int, worldSize+2)
+    world := make([][]byte, worldSize+2)
+    for i := range tempWorld {
+        tempWorld[i] = make([]int, p.imageWidth)
+        world[i] = make([]byte, p.imageWidth)
+    }
 
+    // TODO: add differences for the odd one out
 	//populate the world with values from the input channel
-	for y := 0; y < p.imageHeight/p.threads+2; y++ {
+	for y := 0; y < worldSize+2; y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			world[y][x] = <-inputChan
 		}
 	}
 
 	// Calculate the new state of Game of Life (1 turn).
-	for y := 1; y < p.imageHeight/p.threads+1; y++ {
+	for y := 1; y < worldSize+1; y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			// collect neighbours
 			liveNeighbours := 0
@@ -184,7 +207,7 @@ func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan 
 			tempWorld[y][x] = liveNeighbours
 		}
 	}
-	for a := 1; a < p.imageHeight/p.threads+1; a++ {
+	for a := 1; a < worldSize+1; a++ {
 		for b := 0; b < p.imageWidth; b++ {
 			if tempWorld[a][b] == 3 {
 				world[a][b] = 0xFF
@@ -194,7 +217,7 @@ func calcPgm(p golParams, d distributorChans, alive chan []cell, inputChan chan 
 			tempWorld[a][b] = 0
 		}
 	}
-	for y := 1; y < (p.imageHeight/p.threads + 1); y++ {
+	for y := 1; y < (worldSize + 1); y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			outChan <- world[y][x]
 		}
