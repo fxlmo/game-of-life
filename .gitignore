@@ -1,4 +1,11 @@
+gameoflife
 game-of-life
+
+report.toc
+report.aux
+report.log
+report.f*
+report.syn*
 # Binaries for programs and plugins
 *.exe
 *.exe~
