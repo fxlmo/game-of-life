@@ -7,7 +7,14 @@ gameoflife
 *.so
 *.dylib
 *.zip
-
+# Ignore pdf stuff
+*.aux
+*.log
+*.toc
+*.syn*
+*.fls
+*.fdb*
+*.out
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
