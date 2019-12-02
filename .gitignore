@@ -1,5 +1,14 @@
 game-of-life
 gameoflife
+
+# Ignore pdf stuff
+*.aux
+*.log
+*.toc
+*.syn*
+*.fls
+*.fdb*
+*.out
 # Binaries for programs and plugins
 *.exe
 *.exe~
