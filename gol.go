@@ -98,7 +98,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 			botHalo[w-1] <- world[haloY][x]
 		}
 
-		//TODO: change false to a flag
 		go worker(p, inputChans[w-1], w-1, outChans[w-1], oddOne, topHalo, botHalo, doneChan, flags)
 	}
 
