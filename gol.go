@@ -250,6 +250,7 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 			botHalo[botId] <-world[1][x]
 			topHalo[(id+1) % p.threads] <- world[worldSize][x]
 		}
+
 		//sync all workers with master worker
 		if id == 0 {
 			flags.masterTurn++
