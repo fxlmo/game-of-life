@@ -16,7 +16,7 @@
 %%
 %%=====================================================================================
 % Preamble {{{
-\documentclass[11pt,a4paper,twocolumn,dvipsnames,cmyk]{scrartcl}
+\documentclass[11pt,a4paper,dvipsnames,cmyk]{scrartcl}
 \usepackage[english]{babel}
 \typearea{12}
 % }}}
@@ -31,6 +31,7 @@
 \usepackage{hhline} 
 \usepackage{mathtools} 
 \usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 
 % Headers setup {{{
 \usepackage{fancyhdr}
@@ -71,10 +72,16 @@
 
 
 % Other packages {{{
+\usepackage{multicol}
 \usepackage{needspace}
 \usepackage{tcolorbox}
 \usepackage{soul}
-\usepackage{babel,dejavu,helvet} 
+\usepackage{CormorantGaramond} 
+%% The font package uses mweights.sty which has som issues with the
+%% \normalfont command. The following two lines fixes this issue.
+\let\oldnormalfont\normalfont
+\def\normalfont{\oldnormalfont\mdseries}
+\usepackage{textcomp}
 \usepackage{amsmath} 
 \usepackage{booktabs} 
 \usepackage{tcolorbox} 
@@ -85,26 +92,12 @@
 
 % Title {{{
 \title{Concurrent Computing Coursework}
-\author{Josh Felmeden}
+\author{Josh Felmeden nk18044 \\ Antoine Ritz, }
 % }}}
 
 \begin{document}
-\section*{Introduction}%
-\label{sec:Introduction}
-We have created a program that is able to simulate the cellular automaton
-developed by John Horton Conway named `The Game of Life'. The game evolution is determined by its initial state and requires no further input. Every cell interacts with its eight neighbour pixels: cells that are horizontally, vertically, or diagonally adjacent. At each matrix update in time the following transitions may occur to create the next evolution of the domain:
-
-\begin{itemize}
-    \item Any live cell with fewer than two live neighbours dies
-    \item Any live cell with two or three live neighbours is unaffected
-    \item Any live cell with more than three live neighbours dies
-    \item Any dead cell with exactly three live neighbours becomes alive
-\end{itemize}
-
-Our program successfully computes the automaton for a given number of
-moves concurrently, using multiple threads.
-%TODO: Text goes here
-
+\maketitle
+\begin{multicols}{2}
 \section*{Functionality and Design}%
 \label{sec:func-and-design}
 Our solution was built up by initially creating a single threaded solution
@@ -127,7 +120,25 @@ the process again for the desired number of turns.
 \label{sec:Experiments and Critical Analysis}
 %TODO: Text goes here
 
+\subsection*{Stage 1a -- Single Thread}%
+\label{sub:single-thread}
+
+\subsection*{Stage 1b -- Divide and Conquer}%
+\label{sub:divide-conquer}
+
+\subsection*{Stage 2a -- User Interaction}%
+\label{sub:user-interaction}
+
+\subsection*{Stage 2b -- Periodic Events}%
+\label{sub:periodic-events}
+
+\subsection*{Stage 3 -- Division of Work}%
+\label{sub:division of work}
+
+\subsection*{Stage 4 -- Cooperative Problem Solving}%
+\label{sub:coop-solving}
 
 
+\end{multicols}
 
 \end{document}
