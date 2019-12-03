@@ -1,6 +1,7 @@
 game-of-life
 gameoflife
 
+*.csv
 # Ignore pdf stuff
 *.aux
 *.log

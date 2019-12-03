@@ -97,8 +97,28 @@
 % Title {{{
 \title{The Game of Life}
 \subtitle{Concurrent Computing Coursework}
-\author{Josh Felmeden, NK18044 \\ Antoine Ritz, }
+\author{Josh Felmeden, NK18044 \\ Antoine Ritz, EV18263}
 % }}}
+
+\usepackage{filecontents}
+\begin{filecontents*}{16x16.csv}
+threads,single,divide-conquer,division,coop
+16x16x2-12,33483939,48826398,59129326,28504678
+16x16x4-12,32854597,46599358,57434406,25045960
+16x16x8-12,40454184,61394925,65987021,16747854
+\end{filecontents*}
+\begin{filecontents*}{128x128.csv}
+threads,single,divide-conquer,division,coop
+128x128x2-12,2035618015,1733091481,1688893352,1066302327
+128x128x4-12,2032771685,1293476092,1253884265,560477459
+128x128x8-12,2035792169,1011711902,1002440810,335816265
+\end{filecontents*}
+\begin{filecontents*}{512x512.csv}
+threads,single,divide-conquer,division,coop
+512x512x2-12,32203317370,26492271674,27127623261,10434325929
+512x512x4-12,32129000733,18341708142,18868956173,6353856677
+512x512x8-12,32140070313,14104958044,15309905872,4286390864
+\end{filecontents*}
 
 \begin{document}
 \maketitle
@@ -118,7 +138,7 @@ also need information from the lines directly above and below its strip of
 cells (called \textit{halo lines}). We decided to pass these halo lines
 wrapped around the strips, so that the workers are able to calculate each
 cell correctly. Once they have completed their strip, they return it to
-the distributor function. The function reconstructs the world and begins
+the \texttt{distributor} function. The function reconstructs the world and begins
 the process again for the desired number of turns.
 
 One problem that we ran into was that we were passing the world by means
@@ -243,7 +263,7 @@ Average bench: $90.460s$
     \end{tabular}
 \end{center}
 
-Average bench: $88.539\%$s
+Average bench: $88.539$s
 
 \subsection*{Stage 2b --- Periodic Events}%
 \label{sub:periodic-events}
@@ -297,6 +317,8 @@ Average bench: $90.832$s
 
 \subsection*{Stage 4 --- Cooperative Problem Solving}%
 \label{sub:coop-solving}
+\begin{table}[ht]
+\caption{Benchmark comparison for Stage 4}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -307,6 +329,10 @@ Average bench: $90.832$s
         128x128x8-12 & $361530673$ & $333119799$ & $108\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
+
+\begin{table}[ht]
+\caption{CPU usage for Stage 4}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -317,25 +343,76 @@ Average bench: $90.832$s
         128x128x8-12 & $425\%$ & $667\%$ & $63\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
+
+
 
 Average bench: $41.679$s
 
 \subsection*{Conclusions}%
 \label{sub:Conclusions}
-\begin{tikzpicture}
-   \begin{axis}
-       title={Comparison of benchmarks},
-       ylabel={Nanoseconds per operation},
-       xlabel={Picture size and number of threads},
-       xmin
-       \addplot[
-       color=red
-       ]
-       coordinates {
-           (33483939),(32854597),(40454184),(508515020),(512008390),(509630282),(2035618015),(2032771685),(2035792169),(8030898102),(8067820971),(8081196519),(32203317370),(32129000733),(32140070313)
-       };
-   \end{axis} 
-\end{tikzpicture}
+For smaller image sizes, the single thread solution outperforms the
+initial divide and conquer method. This is because of the large overhead
+cost of splitting the image up and reconstructing the world after each
+turn.  However, for larger images, the divide and conquer algorithm does
+improve on the times set by the single thread, because the cost of
+reconstructing the world and splitting the threads is constant and does
+not rely on the size of the image.
+%TODO INSERT GRAPHS
 
+\pgfplotstableread[col sep=comma]{16x16.csv}\datatable
+\begin{figure}
+    \begin{minipage}[b]{0.58\textwidth}
+        \resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+    legend style={
+        at={(1,1)},
+    anchor=north west,at={(axis description cs:1.1,0.7)}},
+    xtick=data,
+    title style={yshift=1.1ex,},
+    title={\textbf{Comparison for 16x16 image}},
+    xticklabels from table={\datatable}{threads},
+    grid=both,
+    xlabel={Picture size, threads and turns},
+    ylabel={Operations per nanosecond},
+]
+\addplot table [col sep=comma, x expr=\coordindex, y=single, col sep=comma] {16x16.csv};
+\addplot table [col sep=comma, x expr=\coordindex, y=divide-conquer, col sep=comma] {16x16.csv};
+\addplot+[green] table [col sep=comma, x expr=\coordindex, y=coop, col sep=comma] {16x16.csv};
+\addplot+[black] table [col sep=comma, x expr=\coordindex, y=division, col sep=comma] {16x16.csv};
+    
+\legend{Single, Divide and Conquer, Cooperative solving, Division of work}
+\end{axis}
+\end{tikzpicture}
+}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.41\textwidth}
+\resizebox{\textwidth}{!}{%
+\pgfplotstableread[col sep=comma]{128x128.csv}\datatable
+\begin{tikzpicture}
+\begin{axis}[
+    xtick=data,
+    title style={yshift=1.1ex,},
+    title={\textbf{Comparison for 128x128 image}},
+    xticklabels from table={\datatable}{threads},
+    grid=both,
+    xlabel={Picture size, threads and turns},
+    ylabel={Operations per nanosecond},
+]
+\addplot table [col sep=comma, x expr=\coordindex, y=single, col
+    sep=comma] {128x128.csv};
+\addplot table [col sep=comma, x expr=\coordindex, y=divide-conquer, col
+    sep=comma] {128x128.csv};
+\addplot+[green] table [col sep=comma, x expr=\coordindex, y=coop, col
+    sep=comma] {128x128.csv};
+\addplot+[black] table [col sep=comma, x expr=\coordindex, y=division, col
+    sep=comma] {128x128.csv};
+\end{axis}
+\end{tikzpicture}
+}
+\end{minipage}
+\end{figure}
 
 \end{document}
