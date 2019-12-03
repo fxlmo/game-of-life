@@ -42,8 +42,8 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	var botHalo []chan byte
 	var doneChan chan int
 	doneChan = make(chan int, p.threads+100)
-	averageThread := p.imageHeight/p.threads
-	for c := 0; c < p.threads - 1; c++ {
+	averageThread := p.imageHeight / p.threads
+	for c := 0; c < p.threads-1; c++ {
 		inputChans = append(inputChans, make(chan byte, p.imageWidth*(averageThread+2)))
 		outChans = append(outChans, make(chan byte, p.imageWidth*(averageThread+2)))
 		topHalo = append(topHalo, make(chan byte, p.imageWidth*2))
@@ -59,7 +59,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	topHalo = append(topHalo, make(chan byte, p.imageWidth*2))
 	botHalo = append(botHalo, make(chan byte, p.imageWidth*2))
 
-
 	//sends each row byte by byte (including halo lines)
 	var flags = new(keyFlags)
 	flags.masterTurn = 0
@@ -71,7 +70,10 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		starty := (w - 1) * averageThread
 		endy := w * averageThread
 		oddOne := false
-		if w == p.threads { endy = p.imageHeight; oddOne = true }
+		if w == p.threads {
+			endy = p.imageHeight
+			oddOne = true
+		}
 
 		//calculate first halo line
 		for x := 0; x < p.imageWidth; x++ {
@@ -96,7 +98,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 			botHalo[w-1] <- world[haloY][x]
 		}
 
-
 		//TODO: change false to a flag
 		go worker(p, inputChans[w-1], w-1, outChans[w-1], oddOne, topHalo, botHalo, doneChan, flags)
 	}
@@ -108,7 +109,7 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 			fmt.Printf("alive: %d\n", currentAlive)
 		case <-doneChan:
 			numberDone++
-		case key :=<-keyChan:
+		case key := <-keyChan:
 			if key == 'q' {
 				//visualise board and then quit
 				//visualiseMatrix(world, p.imageWidth, p.imageHeight)
@@ -147,7 +148,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 	}
 
-	// TODO wait until workers are done
 	//function to reconstruct world (use channels)
 	for w := 0; w < p.threads-1; w++ {
 		for y := w * averageThread; y < (w+1)*averageThread; y++ {
@@ -157,14 +157,13 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 		}
 	}
 
-	for y := averageThread * (p.threads-1); y < p.imageHeight; y++ {
+	for y := averageThread * (p.threads - 1); y < p.imageHeight; y++ {
 		for x := 0; x < p.imageWidth; x++ {
 			world[y][x] = <-outChans[p.threads-1]
 		}
 	}
 	//fmt.Printf("turn %d\n", turns)
 	//visualiseMatrix(world, p.imageWidth, p.imageHeight)
-
 
 	// Create an empty slice to store coordinates of cells that are still alive after p.turns are done.
 	var finalAlive []cell
@@ -187,7 +186,7 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 
 func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne bool, topHalo []chan byte, botHalo []chan byte, doneChan chan int, flags *keyFlags) {
 	// initiate temporary world structure and world bit
-	worldSize := p.imageHeight/p.threads
+	worldSize := p.imageHeight / p.threads
 	if oddOne && p.imageHeight%p.threads != 0 {
 		worldSize = p.imageHeight - worldSize*(p.threads-1)
 	}
@@ -198,7 +197,6 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 		world[i] = make([]byte, p.imageWidth)
 	}
 
-	// TODO: add differences for the odd one out
 	//populate the world with values from the input channel
 	for y := 1; y < worldSize+1; y++ {
 		for x := 0; x < p.imageWidth; x++ {
@@ -211,7 +209,7 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 		for x := 0; x < p.imageWidth; x++ {
 			world[0][x] = <-topHalo[id]
 			world[worldSize+1][x] = <-botHalo[id]
-        }
+		}
 
 		// Calculate the new state of Game of Life (1 turn).
 		for y := 1; y < worldSize+1; y++ {
@@ -246,9 +244,9 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 
 		//Output Halo lines to appropriate channels
 		for x := 0; x < p.imageWidth; x++ {
-			botId := ((id-1) + p.threads) % (p.threads)
-			botHalo[botId] <-world[1][x]
-			topHalo[(id+1) % p.threads] <- world[worldSize][x]
+			botId := ((id - 1) + p.threads) % (p.threads)
+			botHalo[botId] <- world[1][x]
+			topHalo[(id+1)%p.threads] <- world[worldSize][x]
 		}
 
 		//sync all workers with master worker
@@ -267,7 +265,7 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 			outChan <- world[y][x]
 		}
 	}
-	doneChan <-1
+	doneChan <- 1
 }
 
 func tick(done chan int, p golParams, world [][]byte) {
