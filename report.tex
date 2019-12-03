@@ -19,7 +19,7 @@
 \documentclass[11pt,a4paper,dvipsnames,cmyk]{scrartcl}
 \usepackage[english]{babel}
 \typearea{12}
-% }}}
+%}}}
 
 % Set indentation and line skip for paragraph {{{
 \setlength{\parskip}{1em}
@@ -36,7 +36,7 @@
 % Headers setup {{{
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\lhead{Concurrent Computing Coursework}
+\lhead{Game of Life}
 \rhead{Josh Felmeden, Antoine Ritz}
 \usepackage{hyperref} 
 % }}}
@@ -91,18 +91,20 @@
 % }}}
 
 % Title {{{
-\title{Concurrent Computing Coursework}
-\author{Josh Felmeden nk18044 \\ Antoine Ritz, }
+\title{The Game of Life}
+\subtitle{Concurrent Computing Coursework}
+\author{Josh Felmeden, NK18044 \\ Antoine Ritz, }
 % }}}
 
 \begin{document}
 \maketitle
 \begin{multicols}{2}
+
 \section*{Functionality and Design}%
 \label{sec:func-and-design}
 Our solution was built up by initially creating a single threaded solution
 to the problem. This version iterates through the board bitwise, and for
-each bit gathers all of the `neighbours' for the cells (the 8 directly
+each bit gathers all the `neighbours' for the cells (the 8 directly
 adjacent cells). From this, the logic is applied and the cell is updated
 if necessary. This is repeated for the desired number of turns.
 
@@ -114,28 +116,71 @@ wrapped around the strips, so that the workers are able to calculate each
 cell correctly. Once they have completed their strip, they return it to
 the distributor function. The function reconstructs the world and begins
 the process again for the desired number of turns.
+
+One problem that we ran into was that we were passing the world by means
+of pointer. This led to problems due to premature changes being applied to
+the board. To solve this, we used channels to pass the board to the
+workers.
+
+The processing of the program is currently unable to be cancelled, and
+therefore we added the ability to quit, pause processing, and show the
+current state of the board with key presses. Alongside this, we also
+implemented an output of the number of alive cells every two seconds using
+a \textit{ticker}. 
+
+Following this, we added the ability to allow the number of workers to
+support all multiples of two, rather than powers of two alone. Initially,
+this proved difficult, since at least one worker would receive a smaller
+strip than the others, and consequently meant that some workers would
+finish sooner than others. This resulted in a \textbf{deadlock} situation,
+because the world reconstructing function expected all strips to be of
+equal size, and therefore it was blocked when the final strip was smaller
+than expected. To work around this, we made each worker apart from the
+final one work on the same number of lines, and the final worker simply
+had the remainder. Then, to reconstruct the world, we processed the final
+worker output separately from the rest.
+
+Finally, passing the entire world between each turn is time consuming,
+because in reality, the only information that needs to be passed between
+the workers are the \textit{halo lines}. Additionally, there is no reason
+to reconstruct the entire world each turn. Implementing this proved to be
+problematic, as sometimes the workers would get out of sync with one
+another. To rectify this, we implemented a \textit{master} thread, which
+served as a hard limit on the speed of the other threads to ensure that
+the threads would not exceed one another. We passed in a new structure
+with \texttt{masterTurns} via pointer, which contains the current turn of
+the master thread.
+
+A further problem was to implement the key presses %I DONT KNOW HOW I'M
+%GOING TO DO THIS YET
+
+
 %TODO: Text goes here
 
-\section*{Experiments and Critical Analysis}%
-\label{sec:Experiments and Critical Analysis}
+\newpage
+
+\section*{Tests, Experiments, and Critical Analysis}%
+\label{sec:experiment-and-analysis}
 %TODO: Text goes here
 
-\subsection*{Stage 1a -- Single Thread}%
+
+
+\subsection*{Stage 1a --- Single Thread}%
 \label{sub:single-thread}
 
-\subsection*{Stage 1b -- Divide and Conquer}%
+\subsection*{Stage 1b --- Divide and Conquer}%
 \label{sub:divide-conquer}
 
-\subsection*{Stage 2a -- User Interaction}%
+\subsection*{Stage 2a --- User Interaction}%
 \label{sub:user-interaction}
 
-\subsection*{Stage 2b -- Periodic Events}%
+\subsection*{Stage 2b --- Periodic Events}%
 \label{sub:periodic-events}
 
-\subsection*{Stage 3 -- Division of Work}%
-\label{sub:division of work}
+\subsection*{Stage 3 --- Division of Work}%
+\label{sub:division-of-work}
 
-\subsection*{Stage 4 -- Cooperative Problem Solving}%
+\subsection*{Stage 4 --- Cooperative Problem Solving}%
 \label{sub:coop-solving}
 
 
