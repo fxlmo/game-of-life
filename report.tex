@@ -1,0 +1,133 @@
+%%=====================================================================================
+%%
+%%       Filename:  report.tex
+%%
+%%    Description:  Report for our project
+%%
+%%        Version:  1.0
+%%        Created:  02/12/19
+%%       Revision:  none
+%%
+%%         Author:  YOUR NAME (), 
+%%   Organization:  
+%%      Copyright:  Copyright (c) 2019, YOUR NAME
+%%
+%%          Notes:  
+%%
+%%=====================================================================================
+% Preamble {{{
+\documentclass[11pt,a4paper,twocolumn,dvipsnames,cmyk]{scrartcl}
+\usepackage[english]{babel}
+\typearea{12}
+% }}}
+
+% Set indentation and line skip for paragraph {{{
+\setlength{\parskip}{1em}
+\usepackage[margin=2cm]{geometry}
+\addtolength{\textheight}{-1in}
+\setlength{\headsep}{.5in}
+% }}}
+
+\usepackage{hhline} 
+\usepackage{mathtools} 
+\usepackage[T1]{fontenc}
+
+% Headers setup {{{
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{Concurrent Computing Coursework}
+\rhead{Josh Felmeden, Antoine Ritz}
+\usepackage{hyperref} 
+% }}}
+
+% Listings {{{
+\usepackage[]{listings,xcolor} 
+\lstset
+{
+    breaklines=true,
+    tabsize=3,
+    showstringspaces=false
+}
+
+\definecolor{lstgrey}{rgb}{0.05,0.05,0.05}
+\usepackage{listings}
+\makeatletter
+\lstset{language=[Visual]Basic,
+    backgroundcolor=\color{lstgrey},
+    frame=single,
+    xleftmargin=0.7cm,
+    frame=tlbr, framesep=0.2cm, framerule=0pt,
+    basicstyle=\lst@ifdisplaystyle\color{white}\footnotesize\ttfamily\else\color{black}\footnotesize\ttfamily\fi,
+    captionpos=b,
+    tabsize=2,
+    keywordstyle=\color{Magenta}\bfseries,
+    identifierstyle=\color{Cyan},
+    stringstyle=\color{Yellow},
+    commentstyle=\color{Gray}\itshape
+}
+\makeatother
+\renewcommand{\familydefault}{\sfdefault}
+% }}}
+
+
+% Other packages {{{
+\usepackage{needspace}
+\usepackage{tcolorbox}
+\usepackage{soul}
+\usepackage{babel,dejavu,helvet} 
+\usepackage{amsmath} 
+\usepackage{booktabs} 
+\usepackage{tcolorbox} 
+\usepackage[symbol]{footmisc} 
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\renewcommand{\familydefault}{\sfdefault}
+% }}}
+
+% Title {{{
+\title{Concurrent Computing Coursework}
+\author{Josh Felmeden}
+% }}}
+
+\begin{document}
+\section*{Introduction}%
+\label{sec:Introduction}
+We have created a program that is able to simulate the cellular automaton
+developed by John Horton Conway named `The Game of Life'. The game evolution is determined by its initial state and requires no further input. Every cell interacts with its eight neighbour pixels: cells that are horizontally, vertically, or diagonally adjacent. At each matrix update in time the following transitions may occur to create the next evolution of the domain:
+
+\begin{itemize}
+    \item Any live cell with fewer than two live neighbours dies
+    \item Any live cell with two or three live neighbours is unaffected
+    \item Any live cell with more than three live neighbours dies
+    \item Any dead cell with exactly three live neighbours becomes alive
+\end{itemize}
+
+Our program successfully computes the automaton for a given number of
+moves concurrently, using multiple threads.
+%TODO: Text goes here
+
+\section*{Functionality and Design}%
+\label{sec:func-and-design}
+Our solution was built up by initially creating a single threaded solution
+to the problem. This version iterates through the board bitwise, and for
+each bit gathers all of the `neighbours' for the cells (the 8 directly
+adjacent cells). From this, the logic is applied and the cell is updated
+if necessary. This is repeated for the desired number of turns.
+
+From this, we created a multi-threaded solution. We split the board up
+into strips and passed each strip to a worker. However, each worker would
+also need information from the lines directly above and below its strip of
+cells (called \textit{halo lines}). We decided to pass these halo lines
+wrapped around the strips, so that the workers are able to calculate each
+cell correctly. Once they have completed their strip, they return it to
+the distributor function. The function reconstructs the world and begins
+the process again for the desired number of turns.
+%TODO: Text goes here
+
+\section*{Experiments and Critical Analysis}%
+\label{sec:Experiments and Critical Analysis}
+%TODO: Text goes here
+
+
+
+
+\end{document}
