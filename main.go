@@ -29,7 +29,6 @@ type keyFlags struct {
 	quit		bool
 	show		bool
 	masterTurn	int
-	threadTurn 	[]int
 }
 
 // cell is used as the return type for the testing framework.

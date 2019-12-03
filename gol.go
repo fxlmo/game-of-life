@@ -66,11 +66,6 @@ func distributor(p golParams, d distributorChans, alive chan []cell, keyChan <-c
 	flags.paused = false
 	flags.quit = false
 	flags.show = false
-	for i := 0; i < p.threads; i++ {
-		flags.threadTurn = append(flags.threadTurn, 0)
-	}
-
-	go getKeys(keyChan, flags, p)
 
 	for w := 1; w <= p.threads; w++ {
 		starty := (w - 1) * averageThread
@@ -215,10 +210,8 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 		//adjust halo lines from other workers
 		for x := 0; x < p.imageWidth; x++ {
 			world[0][x] = <-topHalo[id]
-		}
-		for x := 0; x < p.imageWidth; x++ {
 			world[worldSize+1][x] = <-botHalo[id]
-		}
+        }
 
 		// Calculate the new state of Game of Life (1 turn).
 		for y := 1; y < worldSize+1; y++ {
@@ -250,12 +243,10 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 				tempWorld[a][b] = 0
 			}
 		}
-		//fmt.Printf("Master turn: %d, %d turn: %d, threads: %d\n", flags.masterTurn, id, turns, p.threads)
-		flags.threadTurn[id] = turns
+
 		//Output Halo lines to appropriate channels
 		for x := 0; x < p.imageWidth; x++ {
-			botId := id-1
-			if botId < 0 { botId = p.threads-1 }
+			botId := ((id-1) + p.threads) % (p.threads)
 			botHalo[botId] <-world[1][x]
 			topHalo[(id+1) % p.threads] <- world[worldSize][x]
 		}
@@ -267,7 +258,6 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 				time.Sleep(1 * time.Nanosecond)
 			}
 		}
-
 	}
 
 	//return calculated world
@@ -280,7 +270,6 @@ func worker(p golParams, inputChan chan byte, id int, outChan chan byte, oddOne 
 }
 
 func tick(done chan int, p golParams, world [][]byte) {
-
 	t := time.NewTicker(2 * time.Second)
 	for {
 		select {
@@ -296,43 +285,4 @@ func tick(done chan int, p golParams, world [][]byte) {
 			done <- finalAlive
 		}
 	}
-}
-
-func getKeys(keyChan <-chan rune, flags *keyFlags,p golParams) {
-		select {
-		//key is q (113)
-		case key := <-keyChan:
-			if key == 'q' {
-				//visualise board and then quit
-				//visualiseMatrix(world, p.imageWidth, p.imageHeight)
-				println("Quitting...")
-				StopControlServer()
-				os.Exit(0)
-			}
-			//key is s (115)
-			if key == 's' {
-				//visualise board
-				println("Board at turn " + string(p.turns))
-				//visualiseMatrix(world, p.imageWidth, p.imageHeight)
-			}
-			//key is p (112)
-			if key == 'p' {
-				//pause and print current term
-				//If paused again, resume.
-				//visualiseMatrix(world, p.imageWidth, p.imageHeight)
-				println("Paused")
-				pause := true
-				for pause {
-					select {
-					case pauseKey := <-keyChan:
-						if pauseKey == 'p' {
-							pause = false
-						}
-					default:
-					}
-				}
-				println("Continuing")
-			}
-		default:
-		}
 }
