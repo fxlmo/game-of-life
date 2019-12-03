@@ -73,6 +73,7 @@
 
 % Other packages {{{
 \usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 \usepackage{tikz}
 \usepackage{hhline}
 \usepackage{multicol}
@@ -323,13 +324,16 @@ Average bench: $41.679$s
 \label{sub:Conclusions}
 \begin{tikzpicture}
    \begin{axis}
+       title={Comparison of benchmarks},
+       ylabel={Nanoseconds per operation},
+       xlabel={Picture size and number of threads},
+       xmin
        \addplot[
        color=red
        ]
        coordinates {
-        33483939,
-        32854597,40454184,508515020,512008390,509630282,2035618015,2032771685,2035792169,8030898102,8067820971,8081196519,32203317370,32129000733,32140070313
-       }
+           (33483939),(32854597),(40454184),(508515020),(512008390),(509630282),(2035618015),(2032771685),(2035792169),(8030898102),(8067820971),(8081196519),(32203317370),(32129000733),(32140070313)
+       };
    \end{axis} 
 \end{tikzpicture}
 
