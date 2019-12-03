@@ -358,6 +358,10 @@ turn.  However, for larger images, the divide and conquer algorithm does
 improve on the times set by the single thread, because the cost of
 reconstructing the world and splitting the threads is constant and does
 not rely on the size of the image.
+
+In general, the performance of the divide and conquer algorithm and the division of work algorithm is largely the same, especially for larger images. This is due to the fact that the only major difference between the two algorithms is that division of work algorithm allows the splitting of threads by multiples of 2, unlike the divide and conquer algorithm which splits the threads by powers of 2. This disparity between the two algorithms does not affect the performance of the algorithm and explains the minimal difference in the performance of the two solutions.
+
+The only constant result we can find in these graphs is that the cooperative solving solution is consistently faster than any other algorithm. The Cooperative solving algorithms is always faster than either the divide and conquer solution or the division of work solution because the cooperative solving algorithm does not bother rebuilding the entire world after each turn, and instead passes the halo lines to the worker above or below it, while essentially doing the exact the same work as the other two algorithms. As for the single thread solution, the cooperative solving algorithm is still mostly faster because not having to reconstruct the world after each turn saves up a lot of time compared to workers just passing halo lines to workers above or below it. 
 %TODO INSERT GRAPHS
 
 \pgfplotstableread[col sep=comma]{16x16.csv}\datatable
