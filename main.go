@@ -24,6 +24,14 @@ const (
 	ioCheckIdle
 )
 
+type keyFlags struct {
+	paused		bool
+	quit		bool
+	show		bool
+	masterTurn	int
+	threadTurn 	[]int
+}
+
 // cell is used as the return type for the testing framework.
 type cell struct {
 	x, y int
