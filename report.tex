@@ -72,6 +72,9 @@
 
 
 % Other packages {{{
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usepackage{hhline}
 \usepackage{multicol}
 \usepackage{needspace}
 \usepackage{tcolorbox}
@@ -157,33 +160,177 @@ A further problem was to implement the key presses %I DONT KNOW HOW I'M
 
 %TODO: Text goes here
 
+\end{multicols}
 \newpage
 
 \section*{Tests, Experiments, and Critical Analysis}%
 \label{sec:experiment-and-analysis}
 %TODO: Text goes here
 
-
-
 \subsection*{Stage 1a --- Single Thread}%
 \label{sub:single-thread}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $73689886$ & $2021400726$ & $36\%$ \\ \hline
+        128x128x4-12 & $538915394$ & $2010389496$ & $26\%$ \\ \hline
+        128x128x8-12 & $261671491$ & $2009465802$ & $17\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $185\%$ & $100\%$ & $185\%$ \\ \hline
+        128x128x4-12 & $298\%$ & $100\%$ & $298\%$ \\ \hline
+        128x128x8-12 & $425\%$ & $100\%$ & $425\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+
+Average bench: $135.048$s
 
 \subsection*{Stage 1b --- Divide and Conquer}%
 \label{sub:divide-conquer}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $736946012$ & $1704893591$ & $43\%$ \\ \hline
+        128x128x4-12 & $537751669$ & $1273465510$ & $42\%$ \\ \hline
+        128x128x8-12 & $362735057$ & $1004595662$ & $36\%$ \\ \hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $185\%$ & $188\%$ & $98\%$ \\ \hline
+        128x128x4-12 & $298\%$ & $271\%$ & $109\%$ \\ \hline
+        128x128x8-12 & $425\%$ & $348\%$ & $122\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+Average bench: $90.460s$
 
 \subsection*{Stage 2a --- User Interaction}%
 \label{sub:user-interaction}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $736121962$ & $1699574829$ & $43\%$ \\ \hline
+        128x128x4-12 & $537944647$ & $1256970618$ & $42\%$ \\ \hline
+        128x128x8-12 & $361777916$ & $994380759$ & $36\%$ \\ \hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $185\%$ & $188\%$ & $98\%$ \\ \hline
+        128x128x4-12 & $296\%$ & $273\%$ & $108\%$ \\ \hline
+        128x128x8-12 & $426\%$ & $343\%$ & $124\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+Average bench: $88.539\%$s
 
 \subsection*{Stage 2b --- Periodic Events}%
 \label{sub:periodic-events}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $735806211$ & $1718965842$ & $42\%$ \\ \hline
+        128x128x4-12 & $532913881$ & $1277891763$ & $41\%$ \\ \hline
+        128x128x8-12 & $361377377$ & $998142692$ & $36\%$ \\ \hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $185\%$ & $190\%$ & $97\%$ \\ \hline
+        128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
+        128x128x8-12 & $424\%$ & $347\%$ & $122\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+Average bench: $94.175$s
 
 \subsection*{Stage 3 --- Division of Work}%
 \label{sub:division-of-work}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $736951655$ & $1730991762$ & $42\%$ \\ \hline
+        128x128x4-12 & $537184229$ & $1264782083$ & $42\%$ \\ \hline
+        128x128x8-12 & $363069928$ & $987918516$ & $36\%$ \\ \hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $184\%$ & $190\%$ & $96\%$ \\ \hline
+        128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
+        128x128x8-12 & $425\%$ & $347\%$ & $122\%$ \\ \hline
+    \end{tabular}
+\end{center}
+
+Average bench: $90.832$s
 
 \subsection*{Stage 4 --- Cooperative Problem Solving}%
 \label{sub:coop-solving}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $735620822$ & $716510865$ & $102\%$ \\ \hline
+        128x128x4-12 & $530949831$ & $483555762$ & $109\%$ \\ \hline
+        128x128x8-12 & $361530673$ & $333119799$ & $108\%$ \\ \hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+        128x128x2-12 & $185\%$ & $289\%$ & $64\%$ \\ \hline
+        128x128x4-12 & $299\%$ & $425\%$ & $70\%$ \\ \hline
+        128x128x8-12 & $425\%$ & $667\%$ & $63\%$ \\ \hline
+    \end{tabular}
+\end{center}
 
+Average bench: $41.679$s
 
-\end{multicols}
+\subsection*{Conclusions}%
+\label{sub:Conclusions}
+\begin{tikzpicture}
+   \begin{axis}
+       \addplot[
+       color=red
+       ]
+       coordinates {
+
+       }
+   \end{axis} 
+\end{tikzpicture}
+
 
 \end{document}
