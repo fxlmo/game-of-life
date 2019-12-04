@@ -113,18 +113,18 @@ func main() {
 	flag.IntVar(
 		&params.imageWidth,
 		"w",
-		512,
+		128,
 		"Specify the width of the image. Defaults to 512.")
 
 	flag.IntVar(
 		&params.imageHeight,
 		"h",
-		512,
+		128,
 		"Specify the height of the image. Defaults to 512.")
 
 	flag.Parse()
 
-	params.turns = 10000000000
+	params.turns = 1000
 	startControlServer(params)
 	keyChan := make(chan rune)
 
