@@ -104,21 +104,21 @@
 \usepackage{filecontents}
 \begin{filecontents*}{16x16.csv}
 threads,single,divide-conquer,division,coop
-16x16x2-12,33483939,48826398,59129326,28504678
-16x16x4-12,32854597,46599358,57434406,25045960
-16x16x8-12,40454184,61394925,65987021,16747854
+16x16x2-12,0.033483939,0.048826398,0.059129326,0.028504678
+16x16x4-12,0.032854597,0.046599358,0.057434406,0.025045960
+16x16x8-12,0.040454184,0.061394925,0.065987021,0.016747854
 \end{filecontents*}
 \begin{filecontents*}{128x128.csv}
 threads,single,divide-conquer,division,coop
-128x128x2-12,2035618015,1733091481,1688893352,1066302327
-128x128x4-12,2032771685,1293476092,1253884265,560477459
-128x128x8-12,2035792169,1011711902,1002440810,335816265
+128x128x2-12,2.035618015,1.733091481,1.688893352,1.066302327
+128x128x4-12,2.032771685,1.293476092,1.253884265,0.560477459
+128x128x8-12,2.035792169,1.011711902,1.002440810,0.335816265
 \end{filecontents*}
 \begin{filecontents*}{512x512.csv}
 threads,single,divide-conquer,division,coop
-512x512x2-12,32203317370,26492271674,27127623261,10434325929
-512x512x4-12,32129000733,18341708142,18868956173,6353856677
-512x512x8-12,32140070313,14104958044,15309905872,4286390864
+512x512x2-12,32.203317370,26.492271674,27.127623261,10.434325929
+512x512x4-12,32.129000733,18.341708142,18.868956173,6.353856677
+512x512x8-12,32.140070313,14.104958044,15.309905872,4.286390864
 \end{filecontents*}
 \begin{filecontents*}{average.csv}
 solution,average
@@ -187,10 +187,9 @@ passed in a new structure called \texttt{flags} with a variable called
 \texttt{masterTurns} via pointer, which contains the current turn of the
 master thread.
 
-We were unable to implement the user interaction via key press for this implementation
-
-%TODO: Text goes here
-
+We were unable to implement the user interaction via key press for this
+implementation, however, the solution does implement the required
+computations.
 \end{multicols}
 
 \newpage
@@ -457,7 +456,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per nanosecond},
+    ylabel={Operations per second},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col sep=comma] {16x16.csv};
 \addplot table [col sep=comma, x expr=\coordindex, y=divide-conquer, col sep=comma] {16x16.csv};
@@ -469,7 +468,7 @@ same time.
 \end{tikzpicture}
 }
 \end{minipage}
-\caption{16x16 operations per nanosecond comparison}
+\caption{16x16 operations per second comparison}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.41\textwidth}
@@ -484,7 +483,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per nanosecond},
+    ylabel={Operations per second},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col
     sep=comma] {128x128.csv};
@@ -498,7 +497,7 @@ same time.
 \end{tikzpicture}
 }
 \end{minipage}
-\caption{128x128 operations per nanosecond comparison}
+\caption{128x128 operations per second comparison}
 \end{subfigure}
 
 \pgfplotstableread[col sep=comma]{512x512.csv}\datatable
@@ -512,7 +511,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per nanosecond},
+    ylabel={Operations per second},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col
     sep=comma] {512x512.csv};
@@ -525,7 +524,7 @@ same time.
 \end{axis}
 \end{tikzpicture}
 \end{minipage}
-\caption{512x512 operations per nanosecond comparison}
+\caption{512x512 operations per second comparison}
 \end{subfigure}
 \hfill
 \pgfplotstableread[col sep=comma]{average.csv}\datatable
