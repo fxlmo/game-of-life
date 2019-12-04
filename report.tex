@@ -16,7 +16,7 @@
 %%
 %%=====================================================================================
 % Preamble {{{
-\documentclass[11pt,a4paper,dvipsnames,cmyk]{scrartcl}
+\documentclass[10pt,a4paper,dvipsnames,cmyk]{scrartcl}
 \usepackage[english]{babel}
 \typearea{12}
 %}}}
@@ -93,6 +93,7 @@
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
 \renewcommand{\familydefault}{\sfdefault}
 % }}}
+\usepackage{caption,subcaption}
 
 % Title {{{
 \title{The Game of Life}
@@ -119,7 +120,13 @@ threads,single,divide-conquer,division,coop
 512x512x4-12,32129000733,18341708142,18868956173,6353856677
 512x512x8-12,32140070313,14104958044,15309905872,4286390864
 \end{filecontents*}
-
+\begin{filecontents*}{average.csv}
+solution,average
+Single,135.048
+Divide-conquer,90.460
+Division,90.832
+Cooperative,41.679
+\end{filecontents*}
 \begin{document}
 \maketitle
 \begin{multicols}{2}
@@ -143,8 +150,9 @@ the process again for the desired number of turns.
 
 One problem that we ran into was that we were passing the world by means
 of pointer. This led to problems due to premature changes being applied to
-the board. To solve this, we used channels to pass the board to the
-workers.
+the board. To solve this, we used two channels: \texttt{inputChans} and
+\texttt{outChans} (an array of channels with one channel for each worker)
+to pass the board to the workers.
 
 The processing of the program is currently unable to be cancelled, and
 therefore we added the ability to quit, pause processing, and show the
@@ -156,40 +164,45 @@ Following this, we added the ability to allow the number of workers to
 support all multiples of two, rather than powers of two alone. Initially,
 this proved difficult, since at least one worker would receive a smaller
 strip than the others, and consequently meant that some workers would
-finish sooner than others. This resulted in a \textbf{deadlock} situation,
-because the world reconstructing function expected all strips to be of
-equal size, and therefore it was blocked when the final strip was smaller
-than expected. To work around this, we made each worker apart from the
-final one work on the same number of lines, and the final worker simply
-had the remainder. Then, to reconstruct the world, we processed the final
-worker output separately from the rest.
+finish sooner than others. This resulted in a \textbf{deadlock}, because
+the world reconstructing function expected all strips to be of equal size,
+and therefore it attempts to read a strip of equal size for every worker.
+However, the final worker returns a smaller strip and so the
+\texttt{distributor} function is left waiting for more bits to arrive on
+the channel indefinitely. To resolve this, we made each worker apart
+from the final one work on the same number of lines, and the final worker
+simply had the remainder. Then, to reconstruct the world, we processed the
+final worker output separately from the rest.
 
 Finally, passing the entire world between each turn is time consuming,
 because in reality, the only information that needs to be passed between
 the workers are the \textit{halo lines}. Additionally, there is no reason
-to reconstruct the entire world each turn. Implementing this proved to be
-problematic, as sometimes the workers would get out of sync with one
-another. To rectify this, we implemented a \textit{master} thread, which
-served as a hard limit on the speed of the other threads to ensure that
-the threads would not exceed one another. We passed in a new structure
-with \texttt{masterTurns} via pointer, which contains the current turn of
-the master thread.
+to reconstruct the entire world each turn.
 
-A further problem was to implement the key presses %I DONT KNOW HOW I'M
-%GOING TO DO THIS YET
+Implementing this proved to be problematic, as sometimes the workers would
+get out of sync with one another. To rectify this, we implemented a
+\textit{master} thread, which served as a hard limit on the speed of the
+other threads to ensure that the threads would not exceed one another. We
+passed in a new structure called \texttt{flags} with a variable called
+\texttt{masterTurns} via pointer, which contains the current turn of the
+master thread.
 
+We were unable to implement the user interaction via key press for this implementation
 
 %TODO: Text goes here
 
 \end{multicols}
-\newpage
 
+\newpage
 \section*{Tests, Experiments, and Critical Analysis}%
 \label{sec:experiment-and-analysis}
 %TODO: Text goes here
 
 \subsection*{Stage 1a --- Single Thread}%
 \label{sub:single-thread}
+
+\begin{table}[!htb]
+\caption{Benchmark comparison for Stage 1a}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -200,7 +213,10 @@ A further problem was to implement the key presses %I DONT KNOW HOW I'M
         128x128x8-12 & $261671491$ & $2009465802$ & $17\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
 
+\begin{table}[!htb]
+\caption{CPU usage comparison for Stage 1a}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -211,12 +227,18 @@ A further problem was to implement the key presses %I DONT KNOW HOW I'M
         128x128x8-12 & $425\%$ & $100\%$ & $425\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
 
 
-Average bench: $135.048$s
+% Average bench: $135.048$s
+
+This solution is the slowest because of the lack of multi-threading. The
+average bench is $135.048$s.
 
 \subsection*{Stage 1b --- Divide and Conquer}%
 \label{sub:divide-conquer}
+\begin{table}[!htb]
+\caption{Benchmark comparison for Stage 1b}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -227,6 +249,9 @@ Average bench: $135.048$s
         128x128x8-12 & $362735057$ & $1004595662$ & $36\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
+\begin{table}[!htb]
+\caption{CPU usage comparison for Stage 1b}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -237,87 +262,110 @@ Average bench: $135.048$s
         128x128x8-12 & $425\%$ & $348\%$ & $122\%$ \\ \hline
     \end{tabular}
 \end{center}
+\end{table}
 
-Average bench: $90.460s$
+% Average bench: $90.460s$
 
+By dividing the work up between the workers, this solution improves
+greatly on the single threaded solution, with an average benchmark of
+$90.460$s.
+
+\newpage
 \subsection*{Stage 2a --- User Interaction}%
 \label{sub:user-interaction}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
-        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $736121962$ & $1699574829$ & $43\%$ \\ \hline
-        128x128x4-12 & $537944647$ & $1256970618$ & $42\%$ \\ \hline
-        128x128x8-12 & $361777916$ & $994380759$ & $36\%$ \\ \hline
-    \end{tabular}
-\end{center}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
-        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $185\%$ & $188\%$ & $98\%$ \\ \hline
-        128x128x4-12 & $296\%$ & $273\%$ & $108\%$ \\ \hline
-        128x128x8-12 & $426\%$ & $343\%$ & $124\%$ \\ \hline
-    \end{tabular}
-\end{center}
 
-Average bench: $88.539$s
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+%         \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $736121962$ & $1699574829$ & $43\%$ \\ \hline
+%         128x128x4-12 & $537944647$ & $1256970618$ & $42\%$ \\ \hline
+%         128x128x8-12 & $361777916$ & $994380759$ & $36\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+%         \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $185\%$ & $188\%$ & $98\%$ \\ \hline
+%         128x128x4-12 & $296\%$ & $273\%$ & $108\%$ \\ \hline
+%         128x128x8-12 & $426\%$ & $343\%$ & $124\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
+% Average bench: $88.539$s
+
+The benchmark results of stages 2a, 2b, and 3 are almost identical to that
+of stage 1b due to the lack of changes to the processing of the actual
+Game of Life logic. There are minor time increases for each stage due to
+additional constant processing.  In this solution, there is a go routine that checks for a key input
+alongside the computation of the Game of Life logic which impacts the
+benchmark slightly. The average benchmark for this solution is $88.539$s.
 
 \subsection*{Stage 2b --- Periodic Events}%
 \label{sub:periodic-events}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
-        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $735806211$ & $1718965842$ & $42\%$ \\ \hline
-        128x128x4-12 & $532913881$ & $1277891763$ & $41\%$ \\ \hline
-        128x128x8-12 & $361377377$ & $998142692$ & $36\%$ \\ \hline
-    \end{tabular}
-\end{center}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
-        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $185\%$ & $190\%$ & $97\%$ \\ \hline
-        128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
-        128x128x8-12 & $424\%$ & $347\%$ & $122\%$ \\ \hline
-    \end{tabular}
-\end{center}
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+%         \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $735806211$ & $1718965842$ & $42\%$ \\ \hline
+%         128x128x4-12 & $532913881$ & $1277891763$ & $41\%$ \\ \hline
+%         128x128x8-12 & $361377377$ & $998142692$ & $36\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+%         \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $185\%$ & $190\%$ & $97\%$ \\ \hline
+%         128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
+%         128x128x8-12 & $424\%$ & $347\%$ & $122\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
 
-Average bench: $94.175$s
+% Average bench: $94.175$s
+
+For this solution, there is a \texttt{ticker} that outputs the number of
+alive cells every 2 seconds. The impact on the overall runtime of the
+program is minimal, with the average benchmark being $94.175$s.
 
 \subsection*{Stage 3 --- Division of Work}%
 \label{sub:division-of-work}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
-        \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $736951655$ & $1730991762$ & $42\%$ \\ \hline
-        128x128x4-12 & $537184229$ & $1264782083$ & $42\%$ \\ \hline
-        128x128x8-12 & $363069928$ & $987918516$ & $36\%$ \\ \hline
-    \end{tabular}
-\end{center}
-\begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{Benchmark} & \textbf{Baseline CPU usage} &
-        \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
-        128x128x2-12 & $184\%$ & $190\%$ & $96\%$ \\ \hline
-        128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
-        128x128x8-12 & $425\%$ & $347\%$ & $122\%$ \\ \hline
-    \end{tabular}
-\end{center}
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline result} (ns/100 turns) &
+%         \textbf{Our result} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $736951655$ & $1730991762$ & $42\%$ \\ \hline
+%         128x128x4-12 & $537184229$ & $1264782083$ & $42\%$ \\ \hline
+%         128x128x8-12 & $363069928$ & $987918516$ & $36\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
+% \begin{center}
+%     \begin{tabular}{|c|c|c|c|}
+%         \hline
+%         \textbf{Benchmark} & \textbf{Baseline CPU usage} &
+%         \textbf{Our CPU usage} & \textbf{\% Difference} \\ \hhline{|=|=|=|=|}
+%         128x128x2-12 & $184\%$ & $190\%$ & $96\%$ \\ \hline
+%         128x128x4-12 & $299\%$ & $274\%$ & $109\%$ \\ \hline
+%         128x128x8-12 & $425\%$ & $347\%$ & $122\%$ \\ \hline
+%     \end{tabular}
+% \end{center}
 
-Average bench: $90.832$s
+% Average bench: $90.832$s
+
+This implementation is the same as stage 2b in the case of the benchmarks,
+since the benchmark does not test for processes with threads that are not
+powers of two. The average benchmark for this solution is $90.832$s; a
+minor improvement on stage 2b that is simply a result of the normal
+variation in program runtime.
 
 \subsection*{Stage 4 --- Cooperative Problem Solving}%
 \label{sub:coop-solving}
-\begin{table}[ht]
+\begin{table}[!htb]
 \caption{Benchmark comparison for Stage 4}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
@@ -330,8 +378,7 @@ Average bench: $90.832$s
     \end{tabular}
 \end{center}
 \end{table}
-
-\begin{table}[ht]
+\begin{table}[!htb]
 \caption{CPU usage for Stage 4}
 \begin{center}
     \begin{tabular}{|c|c|c|c|}
@@ -347,23 +394,58 @@ Average bench: $90.832$s
 
 
 
-Average bench: $41.679$s
+% Average bench: $41.679$s
 
-\subsection*{Conclusions}%
-\label{sub:Conclusions}
-For smaller image sizes, the single thread solution outperforms the
-initial divide and conquer method. This is because of the large overhead
-cost of splitting the image up and reconstructing the world after each
-turn.  However, for larger images, the divide and conquer algorithm does
-improve on the times set by the single thread, because the cost of
-reconstructing the world and splitting the threads is constant and does
-not rely on the size of the image.
+The final solution is significantly faster than all previous
+implementations by drastically reducing the necessary computations. The
+average benchmark is reduced by over $50\%$ to only $41.679$s.
+
 %TODO INSERT GRAPHS
 
+
+\begin{samepage}
+\subsection*{Conclusions}%
+\label{sub:Conclusions}
+For smaller image sizes (Figure 1a), the single thread solution
+outperforms the initial divide and conquer method. This is because of the
+large overhead cost of splitting the image up and reconstructing the world
+after each turn.  However, for larger images (Figures 1b and 1c), the
+divide and conquer algorithm does improve on the times set by the single
+thread, because the cost of reconstructing the world and splitting the
+threads is constant and does not rely on the size of the image.
+
+In general, the performance of the divide and conquer algorithm and the
+division of work algorithm is largely the same, especially for larger
+images. This is due to the fact that the only major difference between the
+two algorithms is that division of work algorithm allows the splitting of
+threads by multiples of 2, unlike the divide and conquer algorithm which
+splits the threads by powers of 2. This disparity between the two algorithms
+does not affect the performance of the algorithm and explains the minimal
+difference in the performance of the two solutions.
+
+The cooperative solving solution is consistently faster than any other
+algorithm. The cooperative solving algorithm is always faster than both
+stage 3 solution because the cooperative solving algorithm does not
+reconstruct the entire world after each turn, and instead passes the halo
+lines to the worker above or below it. Another point where the cooperative
+solution saves time against the stage 3 implementation is the fact that
+there is no need to calculate the splits on every turn, since each worker
+retains the information of its split after every turn. Additionally, the
+workload of each worker remains almost exactly the same as the workers in
+the stage 3 implementation.
+
+The cooperative solution vastly outperforms the single thread solution due
+to the ability to divide the work among the separate threads. The single
+thread must procedurally compute each bit of the world, while the
+cooperative solution is able to have each thread computing a bit at the
+same time.
+\end{samepage}
+
 \pgfplotstableread[col sep=comma]{16x16.csv}\datatable
-\begin{figure}
-    \begin{minipage}[b]{0.58\textwidth}
-        \resizebox{\textwidth}{!}{%
+\begin{figure}[!htb]
+    \begin{subfigure}{0.58\textwidth}
+\begin{minipage}[b]{\textwidth}
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     legend style={
@@ -387,8 +469,11 @@ not rely on the size of the image.
 \end{tikzpicture}
 }
 \end{minipage}
+\caption{16x16 operations per nanosecond comparison}
+\end{subfigure}
 \hfill
-\begin{minipage}[b]{0.41\textwidth}
+\begin{subfigure}{0.41\textwidth}
+\begin{minipage}[b]{\textwidth}
 \resizebox{\textwidth}{!}{%
 \pgfplotstableread[col sep=comma]{128x128.csv}\datatable
 \begin{tikzpicture}
@@ -413,6 +498,57 @@ not rely on the size of the image.
 \end{tikzpicture}
 }
 \end{minipage}
+\caption{128x128 operations per nanosecond comparison}
+\end{subfigure}
+
+\pgfplotstableread[col sep=comma]{512x512.csv}\datatable
+\begin{subfigure}{0.58\textwidth}
+\begin{minipage}[b]{0.49\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+    xtick=data,
+    title style={yshift=1.1ex,},
+    title={\textbf{Comparison for 512x512 image}},
+    xticklabels from table={\datatable}{threads},
+    grid=both,
+    xlabel={Picture size, threads and turns},
+    ylabel={Operations per nanosecond},
+]
+\addplot table [col sep=comma, x expr=\coordindex, y=single, col
+    sep=comma] {512x512.csv};
+\addplot table [col sep=comma, x expr=\coordindex, y=divide-conquer, col
+    sep=comma] {512x512.csv};
+\addplot+[green] table [col sep=comma, x expr=\coordindex, y=coop, col
+    sep=comma] {512x512.csv};
+\addplot+[black] table [col sep=comma, x expr=\coordindex, y=division, col
+    sep=comma] {512x512.csv};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{512x512 operations per nanosecond comparison}
+\end{subfigure}
+\hfill
+\pgfplotstableread[col sep=comma]{average.csv}\datatable
+\begin{subfigure}{0.58\textwidth}
+\begin{minipage}[b]{0.49\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+    xtick=data,
+    title style={yshift=1.1ex,},
+    title={\textbf{Comparison for average benchmarks}},
+    xticklabels from table={\datatable}{solution},
+    grid=both,
+    xlabel={Implementation},
+    ylabel={Average benchmark (s)},
+]
+\addplot+[purple] table [col sep=comma, x expr=\coordindex, y=average, col
+    sep=comma] {average.csv};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Average benchmarks for each implementation}
+\end{subfigure}
+\caption{Comparison graphs}
 \end{figure}
 
 \end{document}
