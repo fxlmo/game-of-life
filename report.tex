@@ -456,7 +456,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per second},
+    ylabel={Seconds per operation},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col sep=comma] {16x16.csv};
 \addplot table [col sep=comma, x expr=\coordindex, y=divide-conquer, col sep=comma] {16x16.csv};
@@ -468,7 +468,7 @@ same time.
 \end{tikzpicture}
 }
 \end{minipage}
-\caption{16x16 operations per second comparison}
+\caption{16x16 seconds per operation comparison}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.41\textwidth}
@@ -483,7 +483,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per second},
+    ylabel={Seconds per operation},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col
     sep=comma] {128x128.csv};
@@ -497,7 +497,7 @@ same time.
 \end{tikzpicture}
 }
 \end{minipage}
-\caption{128x128 operations per second comparison}
+\caption{128x128 seconds per operation comparison}
 \end{subfigure}
 
 \pgfplotstableread[col sep=comma]{512x512.csv}\datatable
@@ -511,7 +511,7 @@ same time.
     xticklabels from table={\datatable}{threads},
     grid=both,
     xlabel={Picture size, threads and turns},
-    ylabel={Operations per second},
+    ylabel={Seconds per operation},
 ]
 \addplot table [col sep=comma, x expr=\coordindex, y=single, col
     sep=comma] {512x512.csv};
@@ -524,7 +524,7 @@ same time.
 \end{axis}
 \end{tikzpicture}
 \end{minipage}
-\caption{512x512 operations per second comparison}
+\caption{512x512 seconds per operation comparison}
 \end{subfigure}
 \hfill
 \pgfplotstableread[col sep=comma]{average.csv}\datatable
