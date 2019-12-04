@@ -406,7 +406,6 @@ average benchmark is reduced by over $50\%$ to only $41.679$s.
 \begin{samepage}
 \subsection*{Conclusions}%
 \label{sub:Conclusions}
-<<<<<<< HEAD
 For smaller image sizes (Figure 1a), the single thread solution
 outperforms the initial divide and conquer method. This is because of the
 large overhead cost of splitting the image up and reconstructing the world
@@ -414,15 +413,6 @@ after each turn.  However, for larger images (Figures 1b and 1c), the
 divide and conquer algorithm does improve on the times set by the single
 thread, because the cost of reconstructing the world and splitting the
 threads is constant and does not rely on the size of the image.
-=======
-For smaller image sizes, the single thread solution outperforms the
-initial divide and conquer method. This is because of the large overhead
-cost of splitting the image up and reconstructing the world after each
-turn.  However, for larger images, the divide and conquer algorithm does
-improve on the times set by the single thread, because the cost of
-reconstructing the world and splitting the threads is constant and does
-not rely on the size of the image.
->>>>>>> 3877315cb28a6743dad8ab40740f4dbb2ef7a739
 
 In general, the performance of the divide and conquer algorithm and the
 division of work algorithm is largely the same, especially for larger
@@ -433,9 +423,8 @@ splits the threads by powers of 2. This disparity between the two algorithms
 does not affect the performance of the algorithm and explains the minimal
 difference in the performance of the two solutions.
 
-<<<<<<< HEAD
 The cooperative solving solution is consistently faster than any other
-algorithm. The cooperative solving algorithm is always faster than both
+algorithm. The cooperative solving algorithm is always faster than the
 stage 3 solution because the cooperative solving algorithm does not
 reconstruct the entire world after each turn, and instead passes the halo
 lines to the worker above or below it. Another point where the cooperative
@@ -451,21 +440,6 @@ thread must procedurally compute each bit of the world, while the
 cooperative solution is able to have each thread computing a bit at the
 same time.
 \end{samepage}
-=======
-The only constant result we can find in these graphs is that the cooperative
-solving solution is consistently faster than any other algorithm. The
-Cooperative solving algorithms is always faster than either the divide and
-conquer solution or the division of work solution because the cooperative
-solving algorithm does not bother rebuilding the entire world after each
-turn, and instead passes the halo lines to the worker above or below it,
-while essentially doing the exact the same work as the other two algorithms.
-As for the single thread solution, the cooperative solving algorithm is
-still mostly faster because not having to reconstruct the world after each
-turn saves up a lot of time compared to workers just passing halo lines to
-workers above or below it.
-
-%TODO INSERT GRAPHS
->>>>>>> 3877315cb28a6743dad8ab40740f4dbb2ef7a739
 
 \pgfplotstableread[col sep=comma]{16x16.csv}\datatable
 \begin{figure}[!htb]
